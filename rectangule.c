@@ -30,6 +30,8 @@ typedef struct s_rect
     int width;
     int height;
     int color;
+    int  plus;
+    int  minus;
 }	t_rect;
 
 typedef struct s_tri
@@ -91,6 +93,7 @@ int render_circle(t_data *data, struct s_cir circle )
             }
         }
     }
+    return (0);
 }
 
 int render_triangule(t_data *data, struct s_tri tri )
@@ -106,6 +109,7 @@ int render_triangule(t_data *data, struct s_tri tri )
         while (j++ <= i)
             mlx_pixel_put(data->mlx_ptr, data->win_ptr, j, i, tri.color);
     }
+    return (0);
 }
 
 int render_rect(t_data *data, t_rect rect)
@@ -144,15 +148,49 @@ int render_rectangule(t_data *data, t_rect rect)
     return (0);
 }
 
-int	render(t_data *data)
+int	render(t_data *data, int size, int i, int j)
 {
+  //  mlx_key_hook(data->win_ptr, &handle_input, t_rect);
     render_background(data, WHITE_PIXEL);
     render_rect(data, (t_rect){WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100, 100, 100, GREEN_PIXEL});
     render_rectangule(data, (t_rect){WINDOW_WIDTH - 200, 0, 100, 100, RED_PIXEL});
     render_triangule(data, (t_tri){0, 0 , 100, YELLOW_PIXEL});
-    render_circle(data, (t_cir){0, 0, 50, PURPLE_PIXEL});
+    render_circle(data, (t_cir){0 + i, 0 + j, 50 + size , PURPLE_PIXEL});
 
     return (0);
+}
+
+int	close_handler( t_data *data)
+{
+	
+	mlx_destroy_window(data->mlx_ptr,
+						data->win_ptr);
+	mlx_destroy_display(data->mlx_ptr);
+	free(data->mlx_ptr);
+	exit(EXIT_SUCCESS);
+}
+
+int	handle_keypress(int keysym, t_data *data)
+{
+    int size = 50;
+    if (keysym == XK_Escape)
+        close_handler(data);
+    if (keysym == 97)
+        render(data, size, 0 ,0);
+    if (keysym == 98)
+        render(data, size, 10,0);
+
+ 
+    printf("Keypress: %d\n", keysym);
+    //if (keysym == 98)
+    return (0);
+}
+
+static void events(t_data *data)
+{
+   // mlx_hook(data->win_ptr, KeyPress,KeyPressMask, handle_input, data);
+    //mlx_hook(data->win_ptr, ButtonPress, ButtonPressMask, button_handle, data);
+    //mlx_hook(data->win_ptr, DestroyNotify, StructureNotifyMask, close_handle, data);
 }
 // int	render(t_data *data)
 // {
@@ -164,20 +202,21 @@ int	render(t_data *data)
 // }
 /* The x and y coordinates of the rect corresponds to its upper left corner. */
 
-
-
-
 int	main()
 {
-     t_data data; // Create an instance of t_data
+     t_data data; //= {NULL, NULL, 0, 0};
     void *mlx = mlx_init();
     void *win = mlx_new_window(mlx, 640, 360, "Tutorial Window - Figuras Geometricas");
 
      data.mlx_ptr = mlx; // Initialize data.mlx_ptr and data.win_ptr
     data.win_ptr = win;
 
-    render(&data);  // Call render with the address of data
+    render(&data, 0, 0,0);  // Call render with the address of data
+   //n close windows
+    mlx_hook(data.win_ptr, KeyPress, KeyPressMask, &handle_keypress, &data);
     mlx_loop(mlx);
+    
+	//mlx_loop(vars.mlx);
 
 }
 
