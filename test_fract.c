@@ -7,6 +7,17 @@
 #include "minilibx-linux/mlx.h"
 #define WINDOW_WIDTH 700
 #define WINDOW_HEIGHT 700
+#define RED 0xFF0066
+#define ORANGE 0xFF9933
+#define YELLOW 0xFFFF00
+#define GREEN 0x00FF00
+#define BLUE 0x0000FF
+#define PURPLE 0xFF00FF
+#define MAGENTA 0xFF66FF
+#define CIAN 0x00FFFF
+#define TURKEY 0x00FFCC
+#define LIME 0x7FFF00
+#define FUCSIA 0xF600CA
 
 typedef struct s_complex
 {
@@ -23,6 +34,7 @@ typedef struct s_img
     int     endian;
     int     line_len;
 }   t_img;
+
 typedef struct s_windows
 {
     void    *mlx_ptr;
@@ -48,10 +60,34 @@ double ft_scale_down(double x, double a, double b, double min, double max)
   return (b - a) * (x - min) / (max - min) + a;
 }
 
-
-ft_draw(struct t_windows *fract)
+// ft_scalinfg fir eal y imaginary
+// iteration y su complex
+// scaling 
+//
+void ft_draw(int x, int y, struct t_windows *fract)
 {
+    int i = 0;
 
+     t_complex complex;
+    while (++i <= 10)
+    {
+        if (i == 1)
+        {
+            complex.real = x;
+            complex.imaginary = y;
+        }
+        else
+        {
+            complex = num_complex(x, y);
+            x = complex.real;
+            y = complex.imaginary;
+        }
+        if (x * x + y * y > 4) // pertenece al  conjunto de maldelbord
+        {
+            ft_scale_down (i, ORANGE, GREEN,0, 10);
+        }
+          printf("Result: %f + %fi\n", complex.real, complex.imaginary);
+    }
 }
 
 void render(struct s_windows *fract)
@@ -129,7 +165,7 @@ int	main()
     // }
 
 
-    fract_up(fract);
+    fract_up(&fract);
 
     return (0);
 }
