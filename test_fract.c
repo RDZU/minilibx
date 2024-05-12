@@ -46,6 +46,9 @@ typedef struct s_windows
     t_img   img;
     double escape;
     int iterations;
+    double move_x;
+    double move_y;
+    double zoom;
 }   t_windows;
 
 //  if (iteration == 1)
@@ -97,12 +100,25 @@ static void ft_color(int x, int y, t_img *img, int color)
 
 
 }
+
+int	close_handler( t_windows *fract)
+{
+	
+	mlx_destroy_window(fract->mlx_ptr,
+						fract->win_ptr);
+	mlx_destroy_display(fract->mlx_ptr);
+	free(fract->mlx_ptr);
+	exit(EXIT_SUCCESS);
+}
 static void data_init (t_windows *fract)
 {
     fract->iterations = 71;
     fract->escape = 4;
     fract->x = 0.0;
     fract->y = 0.0;
+    fract->zoom = 1.0;
+    //  fract->move_x = 0.0;
+    // fract->move_y = 0.0;
     
 
 }
@@ -144,7 +160,7 @@ static void data_init (t_windows *fract)
    
 // }
 
-// BUENO falta corregir
+//BUENO falta corregir
 // static void ft_draw(int x, int y, t_windows *fract)
 // {
 //    t_complex z;
@@ -154,8 +170,8 @@ static void data_init (t_windows *fract)
 //    z.real = 0.0;
 //    z.imaginary = 0.0;
 //    // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2 
-//    c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT);
-//    c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_HEIGHT);
+//    c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT) + fract->x;
+//    c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_WIDTH);
 
    
 //         while (i++ <= fract->iterations)
@@ -163,41 +179,101 @@ static void data_init (t_windows *fract)
 //             z = num_complex( z.real + c.real, c.imaginary + z.imaginary, i);
 //             if ((z.real + z.real) + (z.imaginary + z.imaginary) >= fract->escape)
 //             {
-//             int color =  ft_scale_down (i, ORANGE, GREEN,0, 100);
+//             int color =  ft_scale_down (i, ORANGE, GREEN,0, fract->iterations);
 //             ft_color(x,y,&fract->img, color);
 //                return ;
 //             }
          
 //         }
 //         ft_color(x,y,&fract->img,FUCSIA);
-    
 // }
 
 
-static void ft_draw(int x, int y, t_windows *fract) {
+//julia
+static void ft_draw(int x, int y, t_windows *fract)
+{
    t_complex z;
    t_complex c;
+   double aux;
    int i = 0;
+    /// Z*z * c Z primera iteracion = 0 y c = 2
+   z.real = 0;
+   z.imaginary = 0.08;
+   // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2 
+   c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT);
+   c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_WIDTH);
 
-   z.real = 0.0;
-   z.imaginary = 0.0;
+   double tmp;
+        while (i++ <= fract->iterations)
+        {
+            
+            tmp = 2 * z.imaginary * c.real * c.imaginary;
+            z.real = z.real * z.real - c.real * c.real; + c.real;
+            z.imaginary = tmp;
 
-   // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2
-   c.real = ft_scale_down(x, -2.0, 2.0, 0, WINDOW_HEIGHT);
-   c.imaginary = ft_scale_down(y, 2.0, -2.0, 0, WINDOW_HEIGHT);
-
-   while (i++ <= fract->iterations) {
-       z = num_complex(z.real * z.real - z.imaginary * z.imaginary + c.real, 2.0 * z.real * z.imaginary + c.imaginary, i);
-
-       if ((z.real * z.real + z.imaginary * z.imaginary) >= fract->escape) {
-           int color = ft_scale_down(i, ORANGE, GREEN, 0, fract->iterations); // Use BLACK or a gradient for non-escaping points
-           ft_color(x, y, &fract->img, color);
-           break;
-       }
-   }
+            if ((z.real + z.real) + (z.imaginary + z.imaginary) >= fract->escape)
+            {
+            int color =  ft_scale_down (i, ORANGE, GREEN,0, fract->iterations);
+            ft_color(x,y,&fract->img, color);
+               return ;
+            }
+         
+        }
+        ft_color(x,y,&fract->img,FUCSIA);
 }
 
 
+// static void ft_draw(int x, int y, t_windows *fract) {
+//    t_complex z;
+//    t_complex c;
+//    int i = 0;
+
+//    z.real = 0.0;
+//    z.imaginary = 0.0;
+
+//    // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2
+//    c.real = ft_scale_down(x, -2.0, 2.0, 0, WINDOW_HEIGHT) *  fract->zoom  + fract->x;
+//    c.imaginary = ft_scale_down(y, 2.0, -2.0, 0, WINDOW_WIDTH) * fract->zoom +  fract->y;
+
+//    while (i++ <= fract->iterations) {
+//        z = num_complex(z.real * z.real - z.imaginary * z.imaginary + c.real, 2.0 * z.real * z.imaginary + c.imaginary, i);
+
+//        if ((z.real * z.real + z.imaginary * z.imaginary) >= fract->escape) {
+//            int color = ft_scale_down(i, ORANGE, GREEN, 0, fract->iterations); // Use BLACK or a gradient for non-escaping points
+//            ft_color(x, y, &fract->img, color);
+//            break;
+//        }
+//    }
+//      ft_scale_down(i, ORANGE, GREEN, 0, fract->iterations);
+// }
+    // julia gemini
+// static void ft_draw(int x, int y, t_windows *fract) {
+//     // Pre-calculate complex number c for efficiency
+//     double real_part = ft_scale_down(x, -2.0, 2.0, 0, WINDOW_HEIGHT) * fract->zoom + fract->x;
+//     double imag_part = ft_scale_down(y, 2.0, -2.0, 0, WINDOW_WIDTH) * fract->zoom +  fract->y;
+
+//     double z_real = -1.3; // Initial value for Julia set
+//     double z_imag = 0.00525;
+
+//     int i;
+//     for (i = 0; i < fract->iterations && z_real * z_real + z_imag * z_imag <= fract->escape; ++i) {
+//         // Combined calculation with temporary variable for clarity
+//         double temp = z_real * z_real - z_imag * z_imag;
+//         z_real = temp + real_part;
+//         z_imag = 2.0 * z_real * z_imag + imag_part;
+//     }
+
+//     int color;
+//     if (i == fract->iterations) {
+//         // Non-escaping point (belongs to Julia set)
+//         color = GREEN; // Or use a gradient for visual interest
+//     } else {
+//         // Escaping point (outside the Julia set)
+//         color = ft_scale_down(i, ORANGE, GREEN, 0, fract->iterations);
+//     }
+
+//     ft_color(x, y, &fract->img, color);
+// }
 
 /*
  * SQUARE is trickier
@@ -230,26 +306,67 @@ void ft_error()
 {
     write(1,"ERROR",5);
 }
-
-int handle_keypress(int keysym, struct s_windows fract)
+// Cerrar ventana
+int	close_handle(void)
+{
+	exit(2);
+	return (2);
+}
+int handle_keypress(int keysym, struct s_windows *fract)
 {
     if (keysym == XK_Escape)
-        close_handler(fract);
-     printf("Keypress: %d\n", keysym);
-if ( keysym == XK_Left)
-if ( keysym == XK_Up)
-if ( keysym == XK_Right)
+       close_handler(fract);
+    
+     // 65361
+ if ( keysym == XK_Left)
+    fract->x += 0.5;
+// 65362
+ if ( keysym == XK_Up)
+    fract->y -= 0.5;
+// 65363
+ if ( keysym == XK_Right)
+    fract->x -= 0.5;
+// 65364
 if ( keysym == XK_Down)
-if (keysym == XK_plus)
+    fract->y += 0.5;
+ if (keysym == 65451)
+    fract->iterations += 1;
+
+if (keysym == 65453)
+    fract->iterations -= 1;
+     printf("Keypress: %i\n", keysym);
+    render(fract);
      return 0;
+}
+
+int mouse_handle(int button,int x,int y, struct s_windows *fract)
+{
+    if (button == 4)
+    {
+        // printf("Zoom IN:\n");
+       fract->zoom -= 0.1;
+    }
+        
+    if(button == 5)
+    {
+      //  printf("Zoom OUT:\n");
+        fract->zoom += 0.1;
+    }
+    printf("zoom %f.\n",fract->zoom);
+    printf("Mouse in Win1, button %d at %dx%d.\n",button,x,y);
+    render(fract);
+    return (0);
 }
 void ft_event(struct s_windows *fract)
 {
 
     mlx_hook(fract->win_ptr, KeyPress,KeyPressMask, handle_keypress, fract);
-   // mlx_hook(data->win_ptr, ButtonPress, ButtonPressMask, mouse_handle, data);
+    mlx_hook(fract->win_ptr, ButtonPress, ButtonPressMask, mouse_handle, fract);
+   // mouse event
+    // mlx_mouse_hook(fract->win_ptr, mouse_hook, fract);
+
     // cerrar ventana 
-   // mlx_hook(fract->win_ptr, DestroyNotify, StructureNotifyMask, close_handle, data);
+    mlx_hook(fract->win_ptr, DestroyNotify, StructureNotifyMask, close_handle, fract);
 }
 
 
@@ -289,8 +406,11 @@ if (NULL == mlx)
     // 
 
     // inicializamos la img
-    ft_event(fract);
     data_init(fract);
+    ft_event(fract);
+    
+
+
 
 }
 
@@ -356,6 +476,9 @@ int	main()
 
    fract_up(&fract);
     render(&fract);
+    // mantiene la ventana abierta sino se cierra al ejecutar programa
+    mlx_loop(fract.mlx_ptr);
+ 
   //  getchar();
     return (0);
     
