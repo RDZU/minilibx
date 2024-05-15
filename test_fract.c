@@ -20,6 +20,10 @@
 #define LIME 0x7FFF00
 #define FUCSIA 0xF600CA
 
+void	ft_putendl_fd(double x, double y, int fd)
+{
+	dprintf(fd, "%f %f\n", x, y);
+}
 
 typedef struct s_complex
 {
@@ -51,6 +55,20 @@ typedef struct s_windows
     double zoom;
 }   t_windows;
 
+// void put_color_to_pixel(t_windows *fractal, int x, int y, unsigned int color) {
+//     if (x >= 0 && x < 799 && y >= 0 && y <  799) {
+//         // Check if pixel is within the image bounds
+//         unsigned int *pixel_ptr = (unsigned int *)fractal->img->img_pixels_ptr + (y * 799 + x);
+//         *pixel_ptr = color; // Set the pixel color
+//     }
+// }
+
+void put_color_to_pixel(t_img *img, int x, int y, int color) {
+    // Access pixel data directly using member variables from the img structure
+    int *pixel_ptr = (int *)(img->img_pixels_ptr + (y * img->line_len / 4) + (x * (img->bpp / 8))); // Consider endianness if needed
+
+    *pixel_ptr = color;
+}
 //  if (iteration == 1)
 //         {
 //             complex.real = x;
@@ -66,21 +84,59 @@ t_complex num_complex(double x, double y, int iteration)
 {
     t_complex complex;
 
-    if (iteration == 1)
-    {
-        complex.real = x;
-        complex.imaginary = y;
-        return (complex);
-    }
-    else
-    {
-        complex.real = (x * x - y * y) + x;
-        complex.imaginary = (2 * x * y) + y;
+    // if (iteration == 1)
+    // {
+ //       complex.real = x;
+   //     complex.imaginary = y;
+    //    return (complex);
+    //}
+    //else
+    //{
+        complex.real = ((x * x) - (y * y));// + x;
+        complex.imaginary = (2 * x * y);// + y;
+   // }
+      
     return (complex);
-    }
+}
+
+t_complex   sum_complex(t_complex z1, t_complex z2)
+{
+    t_complex   result;
+
+    result.real = z1.real + z2.real;
+    result.imaginary = z1.imaginary + z2.imaginary;
+    return result;
 }
 
 
+/*
+ * SQUARE is trickier
+ *
+ * real = (x^2 - y^2)
+ * i =  2*x*y
+*/
+t_complex   square_complex(t_complex z)
+{
+    t_complex   result;
+    
+    result.real = (z.real * z.real) - (z.imaginary * z.imaginary);
+    result.imaginary = 2 * z.real * z.imaginary;
+    return result;
+}
+
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while ((s1[i] != '\0' && s2[i] != '\0') && s1[i] == s2[i] && i < n)
+		i++;
+	if (i < n)
+		return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+	else
+		return (0);
+}
 
 double ft_scale_down(double x, double a, double b, double min, double max) 
 {
@@ -161,65 +217,121 @@ static void data_init (t_windows *fract)
 // }
 
 //BUENO falta corregir
-// static void ft_draw(int x, int y, t_windows *fract)
-// {
-//    t_complex z;
-//    t_complex c;
-//    int i = 0;
-//     /// Z*z * c Z primera iteracion = 0 y c = 2
-//    z.real = 0.0;
-//    z.imaginary = 0.0;
-//    // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2 
-//    c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT) + fract->x;
-//    c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_WIDTH);
-
-   
-//         while (i++ <= fract->iterations)
-//         {
-//             z = num_complex( z.real + c.real, c.imaginary + z.imaginary, i);
-//             if ((z.real + z.real) + (z.imaginary + z.imaginary) >= fract->escape)
-//             {
-//             int color =  ft_scale_down (i, ORANGE, GREEN,0, fract->iterations);
-//             ft_color(x,y,&fract->img, color);
-//                return ;
-//             }
-         
-//         }
-//         ft_color(x,y,&fract->img,FUCSIA);
-// }
 
 
-//julia
+static void ft_draw2(int x, int y, t_windows *fractal)
+{
+    t_complex	z;
+	t_complex	c;
+	int			i;
+	int			color;
+
+	i = 0;
+	// pixel coordinate x && y scaled to fit mandel needs 
+	//
+    c.real = -0.8;
+    c.imaginary = 0.156;
+	z.real = (ft_scale_down(x, -2, +2, 0, WINDOW_WIDTH) * fractal->zoom);
+	z.imaginary = (ft_scale_down(y, +2, -2, 0, WINDOW_HEIGHT) * fractal->zoom);
+	//	to check if the point escaped?
+	while (i < 42)
+	{
+		z = sum_complex(square_complex(z), c);
+		
+
+		if ((z.real * z.real) + (z.imaginary * z.imaginary) > 4)
+		{
+			color = ft_scale_down(i, LIME, GREEN, 0, 42);
+			ft_color(x, y, &fractal->img, color);
+			return ;
+		}
+		++i;	
+	}
+	// We are in MANDELBROT given the iterations made
+	ft_color(x, y, &fractal->img, FUCSIA);
+}
+
+// JULIA
+
+
+t_complex julia_cal (double zx,double zy, double cx,double cy)
+{
+      t_complex   complex;
+
+        complex.real = ((zx * zx) - (zy * zy));// + x;
+        complex.imaginary = (2 * zx * zy);
+
+        complex.real += cx;
+        complex.imaginary += cy;
+        return complex;
+
+}
+static void ft_draw3(int x, int y, t_windows *fract)
+{
+    t_complex	z;
+	t_complex	c;
+	int			i;
+	int			color;
+
+	i = 0;
+	// pixel coordinate x && y scaled to fit mandel needs 
+	//
+    c.real = -0.7269;
+    c.imaginary =  0.18;
+	z.real = (ft_scale_down(x, -2, +2, 0, WINDOW_WIDTH) * fract->zoom);
+	z.imaginary = (ft_scale_down(y, +2, -2, 0, WINDOW_HEIGHT) * fract->zoom);
+        while (i < 50)
+        {
+
+        //      complex.real = ((x * x) - (y * y));// + x;
+        // complex.imaginary = (2 * x * y);//
+
+            // 
+          // z = julia_cal( z.real + c.real, c.imaginary + z.imaginary, i);
+            z = julia_cal( z.real, z.imaginary, c.real ,c.imaginary);
+           
+
+        if ((z.real * z.real) + (z.imaginary * z.imaginary) >= 4)
+		{
+			color = ft_scale_down(i, LIME, GREEN, 0, 50);
+			ft_color(x, y, &fract->img, color);
+			return ;
+		}
+		++i;
+         }
+      // We are in MANDELBROT given the iterations made
+	ft_color(x, y, &fract->img, 0xFFFFFF);
+}
+
 static void ft_draw(int x, int y, t_windows *fract)
 {
-   t_complex z;
-   t_complex c;
-   double aux;
-   int i = 0;
-    /// Z*z * c Z primera iteracion = 0 y c = 2
-   z.real = 0;
-   z.imaginary = 0.08;
-   // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2 
-   c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT);
-   c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_WIDTH);
+    t_complex	z;
+	t_complex	c;
+	int			i;
+	int			color;
 
-   double tmp;
-        while (i++ <= fract->iterations)
+	i = 0;
+     z.real = 0.0;
+    z.imaginary = 0.0;
+	c.real = (ft_scale_down(x, -2, +2, 0, WINDOW_WIDTH) * fract->zoom) + fract->x;
+	c.imaginary = (ft_scale_down(y, +2, -2, 0, WINDOW_HEIGHT) * fract->zoom) + fract->y;
+        while (i < 71)
         {
-            
-            tmp = 2 * z.imaginary * c.real * c.imaginary;
-            z.real = z.real * z.real - c.real * c.real; + c.real;
-            z.imaginary = tmp;
+            z = num_complex( z.real + c.real, c.imaginary + z.imaginary, i);
+            z.real = z.real + c.real;
+            z.imaginary = z.imaginary + c.imaginary;
 
-            if ((z.real + z.real) + (z.imaginary + z.imaginary) >= fract->escape)
+            if ((z.real * z.real) + (z.imaginary * z.imaginary) > 4)
             {
-            int color =  ft_scale_down (i, ORANGE, GREEN,0, fract->iterations);
+            color =  ft_scale_down (i, ORANGE, GREEN,0, 71);
             ft_color(x,y,&fract->img, color);
                return ;
             }
          
-        }
-        ft_color(x,y,&fract->img,FUCSIA);
+         i++;
+         }
+      // We are in MANDELBROT given the iterations made
+	ft_color(x, y, &fract->img, FUCSIA);
 }
 
 
@@ -246,6 +358,71 @@ static void ft_draw(int x, int y, t_windows *fract)
 //    }
 //      ft_scale_down(i, ORANGE, GREEN, 0, fract->iterations);
 // }
+
+
+// void calculate_julia(t_windows *fractal, int x, int y)
+// {
+//     int  i;
+//     double tmp;
+
+//     t_complex c;
+//     t_complex z;
+//     c.real = 0.285;
+//     c.imaginary = 0.01;
+//     z.real = x / fractal->zoom + fractal->x;
+//     z.imaginary = y / fractal->zoom + fractal->y;
+//     i = 0;
+//     while (++i < 42)
+//     {
+//     tmp = z.real;
+//     // real part
+//     z.real= z.real * z.real - z.imaginary * z.imaginary + c.real;
+//     // real imaginary
+//     z.imaginary = 2 * z.imaginary * tmp + c.imaginary;
+//     if (z.real * z.real + z.imaginary * z.imaginary>= 4)
+//         break ;
+//     }
+//     if (i == 42)
+//         put_color_to_pixel(&fractal->img, x, y, 0x000000);
+//     else
+//         put_color_to_pixel(&fractal->img, x, y, (0xFF9933 * (i% 255)));
+// }
+
+//JULIA
+// static void ft_draw(int x, int y, t_windows *fract)
+// {
+//    t_complex z;
+//    t_complex c;
+//    double aux;
+//    int i = 0;
+//     /// Z*z * c Z primera iteracion = 0 y c = 2
+//    z.real = 0;
+//    z.imaginary = 0.08;
+//    // ft_scale_down(i, -2, 2 , 0 , 799)); i valor a interpolar en la escala de -2 a 2 
+//    c.real = ft_scale_down(x, -2, 2, 0, WINDOW_HEIGHT);
+//    c.imaginary = ft_scale_down(y, 2, -2, 0, WINDOW_WIDTH);
+
+//    double tmp;
+//         while (i++ <= fract->iterations)
+//         {
+            
+//             tmp = 2 * z.imaginary * c.real * c.imaginary;
+//             z.real = z.real * z.real - c.real * c.real; + c.real;
+//             z.imaginary = tmp;
+
+//             if ((z.real + z.real) + (z.imaginary + z.imaginary) >= fract->escape)
+//             {
+//             int color =  ft_scale_down (i, ORANGE, GREEN,0, fract->iterations);
+//             ft_color(x,y,&fract->img, color);
+//                return ;
+//             }
+         
+//         }
+//         ft_color(x,y,&fract->img,FUCSIA);
+// }
+
+
+
     // julia gemini
 // static void ft_draw(int x, int y, t_windows *fract) {
 //     // Pre-calculate complex number c for efficiency
@@ -278,7 +455,7 @@ static void ft_draw(int x, int y, t_windows *fract)
 /*
  * SQUARE is trickier
  *
- * real = (x^2 - y^2)
+ * real = (x^2 - y^2)       
  * i =  2*x*y
 */
 
@@ -287,14 +464,15 @@ static void ft_draw(int x, int y, t_windows *fract)
 void render(struct s_windows *fract)
 {
     int x;
-    int y = -1;
+    int y = 0;
 
-    while (y++ < WINDOW_HEIGHT)
+    while (y++ < WINDOW_HEIGHT - 1)
     {
-        x = -1;
-        while (x++ < WINDOW_WIDTH)
+        x = 0;
+        while (x++ < WINDOW_WIDTH - 1)
         {
-            ft_draw(x,y,fract);
+           ft_draw3(x,y,fract);
+           //calculate_julia(fract,x,y);
             
         }
       //  y++;
@@ -316,7 +494,6 @@ int handle_keypress(int keysym, struct s_windows *fract)
 {
     if (keysym == XK_Escape)
        close_handler(fract);
-    
      // 65361
  if ( keysym == XK_Left)
     fract->x += 0.5;
@@ -341,7 +518,7 @@ if (keysym == 65453)
 
 int mouse_handle(int button,int x,int y, struct s_windows *fract)
 {
-    if (button == 4)
+    if (button == 4 && fract->zoom >=0 )
     {
         // printf("Zoom IN:\n");
        fract->zoom -= 0.1;
@@ -402,9 +579,7 @@ if (NULL == mlx)
     fract->img.img_pixels_ptr = mlx_get_data_addr(fract->img.img_ptr, &fract->img.bpp, &fract->img.line_len, &fract->img.endian);
     // check null
 
-
     // 
-
     // inicializamos la img
     data_init(fract);
     ft_event(fract);
@@ -414,8 +589,9 @@ if (NULL == mlx)
 
 }
 
-int	main()
+int	main(int argc, char **argv )
 {
+
     //t_complex complex;
      t_windows fract;
    
@@ -432,6 +608,7 @@ int	main()
 //     {
 //         x = -1;
 //         while (x++ < 100)
+
 //         {
 //             // printf("Result: %d + %d i\n", x, y);
             
