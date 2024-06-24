@@ -1,41 +1,73 @@
-#include "minilibx-linux/mlx.h"
-#include <stdlib.h>
-#include <math.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   draw.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: razamora <razamora@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/06/24 21:17:39 by razamora          #+#    #+#             */
+/*   Updated: 2024/06/24 23:13:02 by razamora         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-#define MALLOC_ERROR	1
-#define WIDTH			400
-#define HEIGHT			400
+#include "fractol.h"
 
-
-int draw_line(void *mlx, void *win, int beginX, int beginY, int endX, int endY, int color)
+static void	ft_color(int x, int y, t_img *img, int color)
 {
-double deltaX = endX - beginX; // 10
-double deltaY = endY - beginY; // 0
+	int	offset;
 
-int pixels = sqrt((deltaX * deltaX) + (deltaY * deltaY));
-deltaX /= pixels; // 1
-deltaY /= pixels; // 0
-
-double pixelX = beginX;
-double pixelY = beginY;
-while (pixels)
-{
-    mlx_pixel_put(mlx, win, pixelX, pixelY, color);
-    pixelX += deltaX;
-    pixelY += deltaY;
-    --pixels;
-}
-//  pixels = sqrt((10 * 10) + (0 * 0)) = sqrt(100) = 10
-
-//raw_line(mlx, win, 10, 10, 20, 10, 0xFFFFFF); // This should create a white horizontal line about 10 pixels long.
-}
-int	main()
-{
-    void *mlx = mlx_init();
-    void *win = mlx_new_window(mlx, 640, 360, "Tutorial Window - Draw Line");
-
-    draw_line(mlx, win, 640, 360, 0, 0, 0xFFFFFF);
-
-    mlx_loop(mlx);
+	offset = (y * img->line_len) + (x * (img->bpp / 8));
+	*(unsigned int *)(img->img_pixels_ptr + offset) = color;
 }
 
+void	ft_julia(int x, int y, t_windows *fract)
+{
+	t_complex	z;
+	t_complex	c;
+	int			i;
+	int			color;
+
+	i = 0;
+	c.real = fract->real;
+	c.imaginary = fract->imaginary;
+	z.real = (ft_interpolation(x, -2, +2, 0, WIDTH) * (1 / fract->zoom)) + fract->move_x;
+	z.imaginary = (ft_interpolation(y, +2, -2, 0, HEIGHT) * (1 / fract->zoom)) + fract->move_y;
+	while (i < fract->iterations)
+	{
+		z = ft_calculate_complex(z.real, z.imaginary, c.real, c.imaginary);
+		if ((z.real * z.real) + (z.imaginary * z.imaginary) >= 4)
+		{
+			color = ft_interpolation(i, LIME, GREEN, 0, fract->iterations);
+			ft_color(x, y, &fract->img, color);
+			return ;
+		}
+		++i;
+	}
+	ft_color(x, y, &fract->img, 0xFFFFFF);
+}
+
+void	ft_mandelbrot(int x, int y, t_windows *fract)
+{
+	t_complex	z;
+	t_complex	c;
+	int			i;
+	int			color;
+
+	i = 0;
+	z.real = 0.0;
+	z.imaginary = 0.0;
+	c.real = (ft_interpolation(x, -2, +2, 0, WIDTH) * (1 / fract->zoom)) + fract->move_x;
+	c.imaginary = (ft_interpolation(y, +2, -2, 0, HEIGHT) * (1 / fract->zoom)) + fract->move_y;
+	while (i < fract->iterations)
+	{
+		z = ft_calculate_complex(z.real, z.imaginary, c.real, c.imaginary);
+		if ((z.real * z.real) + (z.imaginary * z.imaginary) > 4)
+		{
+			color = ft_interpolation (i, YELLOW, ORANGE, 0, fract->iterations);
+			ft_color(x, y, &fract->img, color);
+			return ;
+		}
+		i++;
+	}
+	ft_color(x, y, &fract->img, FUCSIA);
+}
