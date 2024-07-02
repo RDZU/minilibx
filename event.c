@@ -6,7 +6,7 @@
 /*   By: razamora <razamora@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/24 22:01:23 by razamora          #+#    #+#             */
-/*   Updated: 2024/06/24 23:17:29 by razamora         ###   ########.fr       */
+/*   Updated: 2024/07/02 22:33:05 by razamora         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,10 +64,15 @@ int	mouse_handle(int button, int x, int y, struct s_windows *fract)
 {
 	if (button == 4)
 		fract->zoom *= 1.7;
-	if (button == 5)
+	if (button == 5 && fract->zoom >= 0.008100)
 		fract->zoom *= 0.3;
-	fract->move_x += ft_interpolation(x, -2, 2,fract->move_x, WIDTH) * (1 / fract->zoom);
-	fract->move_y += ft_interpolation(y, 2, -2,  fract->move_y,HEIGHT) * (1 / fract->zoom);
+	if (fract->zoom >= 0.008100)
+	{
+		fract->move_x += (ft_interpolation(x - fract->move_x, -2, 2
+		, WIDTH - fract->move_x )) * (1 / fract->zoom); 
+		fract->move_y += (ft_interpolation(y - fract->move_y, 2
+		, -2,HEIGHT - fract->move_y))* (1 / fract->zoom);
+	}
 	printf("zoom %f.\n", fract->zoom);
 	printf("Mouse in Win1, button %d at %dx%d.\n", button, x, y);
 	render(fract);

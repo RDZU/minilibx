@@ -6,7 +6,7 @@
 /*   By: razamora <razamora@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/24 21:17:39 by razamora          #+#    #+#             */
-/*   Updated: 2024/06/24 23:13:02 by razamora         ###   ########.fr       */
+/*   Updated: 2024/07/02 21:09:56 by razamora         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,20 +30,23 @@ void	ft_julia(int x, int y, t_windows *fract)
 	i = 0;
 	c.real = fract->real;
 	c.imaginary = fract->imaginary;
-	z.real = (ft_interpolation(x, -2, +2, 0, WIDTH) * (1 / fract->zoom)) + fract->move_x;
-	z.imaginary = (ft_interpolation(y, +2, -2, 0, HEIGHT) * (1 / fract->zoom)) + fract->move_y;
-	while (i < fract->iterations)
+	if (fract->zoom >= 0.008100)
 	{
-		z = ft_calculate_complex(z.real, z.imaginary, c.real, c.imaginary);
-		if ((z.real * z.real) + (z.imaginary * z.imaginary) >= 4)
+		z.real = (ft_interpolation(x, -2, +2, WIDTH) * (1 / fract->zoom)) + fract->move_x;
+		z.imaginary = (ft_interpolation(y, +2, -2, HEIGHT) * (1 / fract->zoom)) + fract->move_y;
+		while (i < fract->iterations)
 		{
-			color = ft_interpolation(i, LIME, GREEN, 0, fract->iterations);
-			ft_color(x, y, &fract->img, color);
-			return ;
+			z = ft_calculate_complex(z.real, z.imaginary, c.real, c.imaginary);
+			if ((z.real * z.real) + (z.imaginary * z.imaginary) >= 4)
+			{
+				color = ft_interpolation(i, LIME, GREEN, fract->iterations);
+				ft_color(x, y, &fract->img, color);
+				return ;
+			}
+			++i;
 		}
-		++i;
+		ft_color(x, y, &fract->img, 0xFFFFFF);
 	}
-	ft_color(x, y, &fract->img, 0xFFFFFF);
 }
 
 void	ft_mandelbrot(int x, int y, t_windows *fract)
@@ -56,14 +59,14 @@ void	ft_mandelbrot(int x, int y, t_windows *fract)
 	i = 0;
 	z.real = 0.0;
 	z.imaginary = 0.0;
-	c.real = (ft_interpolation(x, -2, +2, 0, WIDTH) * (1 / fract->zoom)) + fract->move_x;
-	c.imaginary = (ft_interpolation(y, +2, -2, 0, HEIGHT) * (1 / fract->zoom)) + fract->move_y;
+	c.real = (ft_interpolation(x -  fract->move_x, -2, +2, WIDTH + fract->move_x) * (1 / fract->zoom));
+	c.imaginary = (ft_interpolation(y - fract->move_y, +2, -2, HEIGHT + fract->move_y) * (1 / fract->zoom));
 	while (i < fract->iterations)
 	{
 		z = ft_calculate_complex(z.real, z.imaginary, c.real, c.imaginary);
 		if ((z.real * z.real) + (z.imaginary * z.imaginary) > 4)
 		{
-			color = ft_interpolation (i, YELLOW, ORANGE, 0, fract->iterations);
+			color = ft_interpolation (i, YELLOW, ORANGE, fract->iterations);
 			ft_color(x, y, &fract->img, color);
 			return ;
 		}

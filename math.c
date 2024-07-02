@@ -6,15 +6,15 @@
 /*   By: razamora <razamora@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/24 20:10:01 by razamora          #+#    #+#             */
-/*   Updated: 2024/06/24 22:42:55 by razamora         ###   ########.fr       */
+/*   Updated: 2024/07/02 20:59:06 by razamora         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fractol.h"
 
-double	ft_interpolation(double x, double a, double b, double min, double max)
+double	ft_interpolation(double x, double a, double b, double max)
 {
-	return ((b - a) * (x - min) / (max - min) + a);
+	return ((b - a) * (x) / (max) + a);
 }
 
 int	ft_iterative_power(int nb, int power)
@@ -54,6 +54,7 @@ t_complex	num_complex(double x, double y)
 	return (complex);
 }
 
+
 double	ft_atof(const char *str)
 {
 	int		sign;
@@ -67,29 +68,20 @@ double	ft_atof(const char *str)
 	sign = 1;
 	result = 0;
 	decimal = 0;
-	j = 0;
 	while ((str[i] >= 9 && str[i] <= 13) || str[i] == 32)
 		i++;
 	if (str[i] == 43 || str[i] == 45)
-	{
-		if (str[i] == 45)
+		if (str[i++] == 45)
 			sign *= -1;
-		i++;
-	}
 	while (str[i] >= 48 && str[i] <= 57 && str[i] != '.')
-	{
-		result = result * 10 + (str[i] - 48);
-		i++;
-	}
+		result = result * 10 + (str[i++] - 48);
 	i++;
 	while (str[i] >= 48 && str[i] <= 57)
 	{
-		decimal = decimal * 10 + (str[i] - 48);
-		i++;
-		j++;
+		decimal = decimal * 10 + (str[i++] - 48);
+	    j++;
 	}
-	result += decimal / ft_iterative_power(10, j);
-	return (result * sign);
+	return ((result + decimal / ft_iterative_power(10, j)) * sign);
 }
 
 /*

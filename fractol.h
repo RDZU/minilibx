@@ -6,7 +6,7 @@
 /*   By: razamora <razamora@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/24 19:30:32 by razamora          #+#    #+#             */
-/*   Updated: 2024/06/24 23:08:05 by razamora         ###   ########.fr       */
+/*   Updated: 2024/07/02 19:50:09 by razamora         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ t_complex	num_complex(double x, double y);
 int			ft_iterative_power(int nb, int power);
 char		*ft_inspace(char *str);
 double		ft_atof(const char *str);
-double		ft_interpolation(double x, double a, double b, double min, double max);
+double		ft_interpolation(double x, double a, double b, double max);
 t_complex	ft_calculate_complex (double zx,double zy, double cx,double cy);
 int			ft_strcmp(const char *s1, const char *s2);
 int			close_handler( t_windows *fract);
